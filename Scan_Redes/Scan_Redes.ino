@@ -1,4 +1,3 @@
-#include <esp_wpa2.h>
 #include <esp_wifi.h>
 #include <WiFi.h>
 #include <HTTPClient.h>
@@ -34,6 +33,8 @@ void setup()
     pinMode(bot, INPUT_PULLUP);
     Serial.begin(115200);
     EEPROM.begin(12);
+    //EEPROM.write(0, 0);
+    //EEPROM.commit();
     Serial.println(EEPROM.read(0));
     WiFi.disconnect(true);
     WiFi.mode(WIFI_STA);
@@ -51,8 +52,8 @@ void setup()
 
     while (WiFi.status() != WL_CONNECTED)
     {
-      delay(500);
-      Serial.print(".");
+        delay(500);
+        Serial.print(".");
     }
     Serial.println("Conectado");
     display.print("Conectado");
@@ -96,6 +97,7 @@ void loop()
                 value1 = EEPROM.read(0);
                 value2 = i + 1;
                 value3 = WiFi.SSID(i);
+                value3.replace(" ", "+");
                 value4 = WiFi.BSSIDstr(i);
                 value5 = WiFi.RSSI(i);
                 value6 = WiFi.channel(i);
@@ -123,11 +125,13 @@ void loop()
                     display.print(",");
                     display.println(WiFi.RSSI(n - 1));
                     display.println();
+                    display.print("Eprom: ");
+                    display.println(EEPROM.read(0));
                 }
 
                 sendData(String(value1) + "&value2=" + String(value2) + "&value3=" + value3 + "&value4=" + value4 + "&value5=" + String(value5) + "&value6=" + String(value6));
             }
-            display.print("Enviado, aperte denovo");
+            display.print("Aperte denovo");
             display.display();
             Serial.println("");
             Serial.println("Todos enviado, aperte denovo");
