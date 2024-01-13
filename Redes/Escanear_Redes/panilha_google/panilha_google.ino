@@ -1,0 +1,225 @@
+#include <Arduino.h>
+#include <esp_wpa2.h>
+#include <esp_wifi.h>
+#include <WiFi.h>
+#include "time.h"
+#include "esp_sntp.h"
+#include <HTTPClient.h>
+#include <ESP_Google_Sheet_Client.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_ST7789.h>
+#include <EEPROM.h>
+
+Adafruit_ST7789 display = Adafruit_ST7789(15, 5, 4);
+
+#define bot 27
+
+#define EXAMPLE_EAP_METHOD 1
+
+#define Username "Usuario do Suap"
+#define Password "Senha do Suap"
+#define Network "IFPB"
+
+#define WIFI_SSID "Rede qualquer"
+#define WIFI_PASSWORD "Senha da rede qualquer"
+
+#define USER_EMAIL "Email com token" 
+
+#define PROJECT_ID "esp-panilha"
+
+#define CLIENT_EMAIL "esp-panilha-sa@esp-panilha.iam.gserviceaccount.com"
+
+const char PRIVATE_KEY[] PROGMEM = "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCIc81jMpnhtOE/\nC1nnM2+M84VW4tpZ6KH8Yv+NfLKKO8NguJs1PNaBchgpPCUYwOV4S7qyn0/5TwZW\n/47QuQq+PIdRXwSg2bRojXg78GfUm0xsCkkqsG52TI4e3yanPJyOYvamrgbyh4PH\nOlKM7Gvr2gTGPORWLN2AVv/oSwYAuWrOXuY9UiE0h4q92odlLPBPMCFwRQe+3ctS\nqtjnTIC3P39/MLcZjQHdP/KmEoUbBdUFeOIf/Hrogj60T61d+E4aKzR9WLcIGLMG\n4bA4cNjUH6EXsgVwHB3SHpLI3UCzDs3xhhIkiDHyLXs7Mqv+g8vFbKqKb2FqcBQ0\novB0iPN9AgMBAAECggEANMwJ9o4HuKuSVCCCQtFGIlW/jCTus8ctlkh/9TEArDf/\nmxcTBwBpR2DsNFhPSkqo/2jd7mtyOFb5bwQnMF/I5l7pRPTtB4f1JFdI5Hha1Ira\ngRthwCDQPPnWK9/QRvlO4lEsesXvbjw9IwNQGbMI9xM+sa2x9B4b/qKrFiihQ/np\nzu1g09NTGl7xhzD3pxe/pYDPQMyVl9HLiQlita+bCp/ehD0/GW1gTryQTCZaQwH4\n/+Fm4sLmwGOeVOP7qVLorgblMStisADqJaUtqCleAA+4844EW6uYFa8pyHiK1xiC\nIYr2HXvg84SYiKb3mNbJfYB185KvfcCkYRBJjsn1SQKBgQC+UFIeRfodnNzqNwkq\nQAn7DRHcfvM4JCKi4tql7z8mMskYtPf+W6whG1fNcFbCG224i4H0LVZqWslfyQCO\nVjOoHeZRU+TM2OItTpaIaT8hGkAAYOukB99Org6RWOyno45DoPM8OHlqMgksWVBc\nXZTEnv+BFAUlMg1vcEBRJBrqrwKBgQC3jGnxupuvN8eU74r4T69MG1O09y0zcbWc\nqs07zT6NJ1+YMiV3W1zFlFPFvYKtj+qHwIHlPnKFtUriRAZJhNhGHBgcpQkGmWFt\nKYK1Ju7x4awr1hnzjUSgH6X384U61Vvm1CqneoZJHplqJcp7ujqehKMywAEXNLq8\nK9tRKicfkwKBgQCvmYELudmcNT6JRZrJRyluYZLXdrOIW58x2EuSy/vijP2MNH6W\nTZO3QHl1b3A9zf0hSGfyG1se6wHfxaEjtFoZhu0aoWP9tyiKUXcICsRbENN5BfSm\n9zSObn+2kOxbicgckoecSyeMWvqn1wkVEKvR+DscqJJOza4j4tkVhVDotQKBgQCX\nJErBQNaeLCJuo+odmxBQbVg6dieEaygPgB5MFjBh74AqRXDQni0AjamF9Q28efu4\nGW9dJFUNgUHOnBFJTNkCsnOwcr3B719oknwNS6gLCbfKyRzJjxRpfmYejSqyTarF\nowQUsTIO1+GgpMndpHZMvg/c5HqBb2wtMzf/1+QrfQKBgEkrkiLtrShI6eX+jJpV\ngytfQ7k+xRiuucx3u1SB2FmeYwDwiWfzg2AkE7ldrertWteWD8WXSP3Ujyh/Zwjn\nJW2F0W9UI8BT7cHDuzZkqOeu3rQhNKPbpyHHczIFUFjBCSY51HIQmNHTRMIS4/Ym\nXFjb8lvO5KvAmpNZfwp4V6KC\n-----END PRIVATE KEY-----\n";
+
+String spreadsheetId = "1Zq6QtXAT_hTgf-2GD40lWlqmuy1DG-v4jkdpNf-eN3M";
+String spreadsheetURL = "https://docs.google.com/spreadsheets/d/1Zq6QtXAT_hTgf-2GD40lWlqmuy1DG-v4jkdpNf-eN3M/edit"; 
+
+#define gmtOffset_sec -14400
+
+char data[20];
+char hora[10];
+int value1;
+int value2;
+String value3 = "";
+String value4 = "";
+int value5;
+int value6;
+
+void conectar()
+{
+  WiFi.disconnect(true);
+  WiFi.setAutoReconnect(true);
+  WiFi.mode(WIFI_STA);
+  ESP_LOGI(TAG, "Setting WiFi configuration SSID %s...", wifi_config.sta.ssid);
+  ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+  ESP_ERROR_CHECK(esp_wifi_sta_wpa2_ent_set_username((uint8_t *)Username, strlen(Username)));
+  ESP_ERROR_CHECK(esp_wifi_sta_wpa2_ent_set_password((uint8_t *)Password, strlen(Password)));
+  esp_wifi_sta_wpa2_ent_enable();
+  WiFi.begin(Network);
+
+  display.println("conectando");
+
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    delay(500);
+    Serial.print(".");
+    display.print(".");
+  }
+  Serial.println("conectado");
+  display.print("!");
+}
+
+void tokenStatusCallback(TokenInfo info)
+{
+  if (info.status == token_status_error)
+  {
+    GSheet.printf("Token info: type = %s, status = %s\n", GSheet.getTokenType(info).c_str(), GSheet.getTokenStatus(info).c_str());
+    GSheet.printf("Token error: %s\n", GSheet.getTokenError(info).c_str());
+  }
+  else
+  {
+    GSheet.printf("Token info: type = %s, status = %s\n", GSheet.getTokenType(info).c_str(), GSheet.getTokenStatus(info).c_str());
+  }
+}
+
+void ini_panilha()
+{
+  GSheet.setTokenCallback(tokenStatusCallback);
+
+  GSheet.setPrerefreshSeconds(10 * 60);
+
+  GSheet.begin(CLIENT_EMAIL, PROJECT_ID, PRIVATE_KEY);
+
+  while (!GSheet.ready())
+    ;
+
+  Serial.printf("Link da panilha: ");
+  Serial.println(spreadsheetURL);
+  Serial.println();
+
+  long int t = GSheet.getExpiredTimestamp();
+  GSheet.setSystemTime(t gmtOffset_sec);
+
+  display.print("Conectado");
+}
+
+void setup()
+{
+  display.init(135, 240);
+  display.setTextColor(ST77XX_WHITE);
+  display.setRotation(2); 
+  display.setTextSize(2);
+  display.fillScreen(ST77XX_BLACK);
+
+  pinMode(bot, INPUT_PULLUP);
+
+  Serial.begin(115200);
+
+  EEPROM.begin(12);
+  //EEPROM.write(0, 76);
+  //EEPROM.commit();
+  Serial.println(EEPROM.read(0));
+  display.print("EEPROM: ");
+  display.println(EEPROM.read(0));
+
+  conectar();
+  //WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+
+  ini_panilha();
+}
+void loop()
+{
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    display.fillScreen(ST77XX_BLACK);
+    display.setCursor(0, 0); // Setando para todos iniciar no inicio da tela
+    display.print("Desconectado");
+  }
+
+  bool ready = GSheet.ready();
+
+  if (!digitalRead(bot) && ready)
+  {
+    display.fillScreen(ST77XX_BLACK);
+    display.setCursor(0, 0); 
+
+    Serial.println("botão pressionado");
+
+    EEPROM.write(0, EEPROM.read(0) + 1);
+    EEPROM.commit();
+
+    FirebaseJson response; 
+    FirebaseJson valueRange;
+
+    int n = WiFi.scanNetworks();
+
+    display.print(n);
+    display.println(" redes");
+    display.println();
+
+    Serial.print(n);
+    Serial.println(" redes encontradas");
+    Serial.println("Num | Rank | SSID                             | MAC               | RSSI | CH");
+    for (int i = 0; i < n; ++i)
+    {
+      value1 = EEPROM.read(0);
+      value2 = i + 1;
+      value3 = WiFi.SSID(i);
+      value4 = WiFi.BSSIDstr(i);
+      value5 = WiFi.RSSI(i);
+      value6 = WiFi.channel(i);
+
+      struct tm timeinfo;
+      getLocalTime(&timeinfo);
+      strftime(data, sizeof(data), "%d/%m/%Y", &timeinfo);
+      strftime(hora, sizeof(hora), "%H:%M:%S", &timeinfo);
+
+      valueRange.set("values/[0]/[0]", data); 
+      valueRange.set("values/[0]/[1]", hora); 
+      valueRange.set("values/[0]/[2]", value1); 
+      valueRange.set("values/[0]/[3]", value2); 
+      valueRange.set("values/[0]/[4]", value3); 
+      valueRange.set("values/[0]/[5]", value4); 
+      valueRange.set("values/[0]/[6]", value5); 
+      valueRange.set("values/[0]/[7]", value6); 
+
+      Serial.printf("%2d", EEPROM.read(0));
+      Serial.print(" |  ");
+      Serial.printf("%2d", i + 1);
+      Serial.print("  | ");
+      Serial.printf("%-32.32s", WiFi.SSID(i).c_str());
+      Serial.print(" | ");
+      Serial.printf("%-17.17s", WiFi.BSSIDstr(i).c_str());
+      Serial.print(" | ");
+      Serial.printf("%4d", WiFi.RSSI(i));
+      Serial.print(" | ");
+      Serial.printf("%2d", WiFi.channel(i));
+      Serial.println();
+
+      if (i == 0)
+      {
+        display.print(WiFi.SSID(i));
+        display.print(",");
+        display.println(WiFi.RSSI(i));
+        display.println();
+        display.print(WiFi.SSID(n - 1));
+        display.print(",");
+        display.println(WiFi.RSSI(n - 1));
+        display.println();
+        display.print("Eprom: ");
+        display.println(EEPROM.read(0));
+        display.println();
+      }
+
+      bool success = GSheet.values.append(&response, spreadsheetId, "Dados!A1:I1000", &valueRange);
+      if (!success){
+      Serial.println(GSheet.errorReason());  
+      display.println("ocorreu um erro ao enviar");
+      }    
+    }
+    display.print("Aperte denovo");
+
+    Serial.println("Todos enviado, aperte denovo");
+    Serial.println();
+  }
+}
