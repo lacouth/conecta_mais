@@ -1,3 +1,5 @@
+// SPIFFS e SpreadSheet.cpp
+
 #include <Arduino.h>
 #include <esp_wpa2.h>
 #include <esp_wifi.h>
@@ -18,22 +20,24 @@ Adafruit_ST7789 display = Adafruit_ST7789(15, 5, 4);
 int temp;
 #define resetar 5000
 
+#define WPA2 0
+
 #define EXAMPLE_EAP_METHOD 1
 
-#define Username "Usuario do Suap"
-#define Password "Senha do Suap"
+#define Username "Usuario do SUAP"
+#define Password "Senha do SUAP"
 #define Network "IFPB"
 
-#define WIFI_SSID "Rede qualquer"
-#define WIFI_PASSWORD "Senha da rede qualquer"
+#define WIFI_SSID "Nomde rede convencional"
+#define WIFI_PASSWORD "Senha da rede convencional"
 
-#define USER_EMAIL "Email com token"
+#define USER_EMAIL "Email publico"
 #define PROJECT_ID "esp-panilha"
 #define CLIENT_EMAIL "esp-panilha-sa@esp-panilha.iam.gserviceaccount.com"
 
 const char PRIVATE_KEY[] PROGMEM = "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCIc81jMpnhtOE/\nC1nnM2+M84VW4tpZ6KH8Yv+NfLKKO8NguJs1PNaBchgpPCUYwOV4S7qyn0/5TwZW\n/47QuQq+PIdRXwSg2bRojXg78GfUm0xsCkkqsG52TI4e3yanPJyOYvamrgbyh4PH\nOlKM7Gvr2gTGPORWLN2AVv/oSwYAuWrOXuY9UiE0h4q92odlLPBPMCFwRQe+3ctS\nqtjnTIC3P39/MLcZjQHdP/KmEoUbBdUFeOIf/Hrogj60T61d+E4aKzR9WLcIGLMG\n4bA4cNjUH6EXsgVwHB3SHpLI3UCzDs3xhhIkiDHyLXs7Mqv+g8vFbKqKb2FqcBQ0\novB0iPN9AgMBAAECggEANMwJ9o4HuKuSVCCCQtFGIlW/jCTus8ctlkh/9TEArDf/\nmxcTBwBpR2DsNFhPSkqo/2jd7mtyOFb5bwQnMF/I5l7pRPTtB4f1JFdI5Hha1Ira\ngRthwCDQPPnWK9/QRvlO4lEsesXvbjw9IwNQGbMI9xM+sa2x9B4b/qKrFiihQ/np\nzu1g09NTGl7xhzD3pxe/pYDPQMyVl9HLiQlita+bCp/ehD0/GW1gTryQTCZaQwH4\n/+Fm4sLmwGOeVOP7qVLorgblMStisADqJaUtqCleAA+4844EW6uYFa8pyHiK1xiC\nIYr2HXvg84SYiKb3mNbJfYB185KvfcCkYRBJjsn1SQKBgQC+UFIeRfodnNzqNwkq\nQAn7DRHcfvM4JCKi4tql7z8mMskYtPf+W6whG1fNcFbCG224i4H0LVZqWslfyQCO\nVjOoHeZRU+TM2OItTpaIaT8hGkAAYOukB99Org6RWOyno45DoPM8OHlqMgksWVBc\nXZTEnv+BFAUlMg1vcEBRJBrqrwKBgQC3jGnxupuvN8eU74r4T69MG1O09y0zcbWc\nqs07zT6NJ1+YMiV3W1zFlFPFvYKtj+qHwIHlPnKFtUriRAZJhNhGHBgcpQkGmWFt\nKYK1Ju7x4awr1hnzjUSgH6X384U61Vvm1CqneoZJHplqJcp7ujqehKMywAEXNLq8\nK9tRKicfkwKBgQCvmYELudmcNT6JRZrJRyluYZLXdrOIW58x2EuSy/vijP2MNH6W\nTZO3QHl1b3A9zf0hSGfyG1se6wHfxaEjtFoZhu0aoWP9tyiKUXcICsRbENN5BfSm\n9zSObn+2kOxbicgckoecSyeMWvqn1wkVEKvR+DscqJJOza4j4tkVhVDotQKBgQCX\nJErBQNaeLCJuo+odmxBQbVg6dieEaygPgB5MFjBh74AqRXDQni0AjamF9Q28efu4\nGW9dJFUNgUHOnBFJTNkCsnOwcr3B719oknwNS6gLCbfKyRzJjxRpfmYejSqyTarF\nowQUsTIO1+GgpMndpHZMvg/c5HqBb2wtMzf/1+QrfQKBgEkrkiLtrShI6eX+jJpV\ngytfQ7k+xRiuucx3u1SB2FmeYwDwiWfzg2AkE7ldrertWteWD8WXSP3Ujyh/Zwjn\nJW2F0W9UI8BT7cHDuzZkqOeu3rQhNKPbpyHHczIFUFjBCSY51HIQmNHTRMIS4/Ym\nXFjb8lvO5KvAmpNZfwp4V6KC\n-----END PRIVATE KEY-----\n";
 
-#define spreadsheetId "1Zq6QtXAT_hTgf-2GD40lWlqmuy1DG-v4jkdpNf-eN3M"
+#define spreadsheetid "1Zq6QtXAT_hTgf-2GD40lWlqmuy1DG-v4jkdpNf-eN3M"
 #define spreadsheetURL "https://docs.google.com/spreadsheets/d/1Zq6QtXAT_hTgf-2GD40lWlqmuy1DG-v4jkdpNf-eN3M/edit"
 
 #define gmtOffset_sec -14400
@@ -45,12 +49,11 @@ String value4 = "";
 int value5;
 int value6;
 
-bool flag;
-bool ready;
-long int cont;
+File dados;
 
 void conectar()
 {
+  #if WPA2
   WiFi.disconnect(true);
   WiFi.mode(WIFI_STA);
   ESP_LOGI(TAG, "Setting WiFi configuration SSID %s...", wifi_config.sta.ssid);
@@ -59,8 +62,9 @@ void conectar()
   ESP_ERROR_CHECK(esp_wifi_sta_wpa2_ent_set_password((uint8_t *)Password, strlen(Password)));
   esp_wifi_sta_wpa2_ent_enable();
   WiFi.begin(Network);
-
-  display.println("conectando");
+  #else
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  #endif
 
   while (WiFi.status() != WL_CONNECTED)
   {
@@ -68,8 +72,8 @@ void conectar()
     Serial.print(".");
     display.print(".");
   }
-  Serial.println("conectado");
-  display.print("!");
+  Serial.println("Conectado");
+  display.println("!");
 }
 
 void tokenStatusCallback(TokenInfo info)
@@ -96,61 +100,54 @@ void ini_panilha()
   while (!GSheet.ready())
     ;
 
-  Serial.printf("Link da panilha: ");
-  Serial.println(spreadsheetURL);
-  Serial.println();
+  Serial.printf("Link da panilha: %s \n \n", spreadsheetURL);
 
   long int t = GSheet.getExpiredTimestamp();
   GSheet.setSystemTime(t gmtOffset_sec);
 
-  display.print("Conectado");
+  display.println("Conectado");
 }
 
 void panilha()
 {
-  if (WiFi.status() == WL_CONNECTED)
+  if ((WiFi.status() == WL_CONNECTED) && (GSheet.ready()))
   {
-    ready = GSheet.ready();
-    if (flag && ready)
+    while (EEPROM.read(3))
     {
-      File dados = SPIFFS.open("/dados.txt");
-      while (dados.available())
+      FirebaseJson response;
+      FirebaseJson valueRange;
+
+      valueRange.set("values/[0]/[0]", dados.readStringUntil(','));
+      valueRange.set("values/[0]/[1]", dados.readStringUntil(','));
+      valueRange.set("values/[0]/[2]", dados.readStringUntil(','));
+      valueRange.set("values/[0]/[3]", dados.readStringUntil(','));
+      valueRange.set("values/[0]/[4]", dados.readStringUntil(','));
+      valueRange.set("values/[0]/[5]", dados.readStringUntil(','));
+      valueRange.set("values/[0]/[6]", dados.readStringUntil(','));
+      valueRange.set("values/[0]/[7]", dados.readStringUntil(','));
+
+      EEPROM.write(4, EEPROM.read(4) + 8);
+
+      bool success = GSheet.values.append(&response, spreadsheetid, "Dados!A1:I1000", &valueRange);
+      if (!success)
       {
-        FirebaseJson response;
-        FirebaseJson valueRange;
-        
-        dados.seek(EEPROM.read(4));
-
-        valueRange.set("values/[0]/[0]", dados.readStringUntil(','));
-        valueRange.set("values/[0]/[1]", dados.readStringUntil(','));
-        valueRange.set("values/[0]/[2]", dados.readStringUntil(','));
-        valueRange.set("values/[0]/[3]", dados.readStringUntil(','));
-        valueRange.set("values/[0]/[4]", dados.readStringUntil(','));
-        valueRange.set("values/[0]/[5]", dados.readStringUntil(','));
-        valueRange.set("values/[0]/[6]", dados.readStringUntil(','));
-        valueRange.set("values/[0]/[7]", dados.readStringUntil(','));
-        
-        EEPROM.write(4, dados.position());
-        EEPROM.commit();
-
-        bool success = GSheet.values.append(&response, spreadsheetId, "Dados!A1:I1000", &valueRange);
-        if (!success)
-        {
-          Serial.println(GSheet.errorReason());
-          display.println("ocorreu um erro ao enviar");
-        }
+        Serial.printf("%s", GSheet.errorReason());
+        display.println("ocorreu um erro ao enviar");
       }
-      dados.close();
-      Serial.println("Todos enviados");
-      display.println("Todos enviados");
-      flag = false;
+      EEPROM.write(3, EEPROM.read(3) - 1);
+      EEPROM.commit();
+      Serial.println("Linha enviada");
+    }
+    if(EEPROM.read(3) == 0)
+    {
+      display.setCursor(0, 220);
+      display.print("Enviado");
     }
   }
   else
   {
-    display.fillScreen(ST77XX_BLACK);
-    display.setCursor(0, 124); // Setando para todos iniciar no inicio da tela
-    display.print("Desconectado");
+    display.setCursor(0, 205);
+    display.print("descon");
   }
 }
 
@@ -169,13 +166,9 @@ void scan_redes()
 
     int n = WiFi.scanNetworks();
 
-    display.print(n);
-    display.println(" redes");
-    display.println();
+    display.printf("%d redes \n \n", n);
 
-    Serial.print(n);
-    Serial.println(" redes encontradas");
-    Serial.println("Num | Rank | SSID                             | MAC               | RSSI | CH");
+    Serial.printf("%d redes encontradas \nNum | Rank | SSID                             | MAC               | RSSI | CH \n", n);
     for (int i = 0; i < n; ++i)
     {
       value1 = EEPROM.read(0);
@@ -191,7 +184,7 @@ void scan_redes()
       excel.print(String(value1) + "," + String(value2) + "," + value3 + "," + value4 + "," + String(value5) + "," + String(value6));
       excel.println(",");
 
-      Serial.printf("%2d", EEPROM.read(0));
+      Serial.printf("%-3.3d", EEPROM.read(0));
       Serial.print(" |  ");
       Serial.printf("%2d", i + 1);
       Serial.print("  | ");
@@ -201,26 +194,18 @@ void scan_redes()
       Serial.print(" | ");
       Serial.printf("%4d", WiFi.RSSI(i));
       Serial.print(" | ");
-      Serial.printf("%2d", WiFi.channel(i));
-      Serial.println();
+      Serial.printf("%2d \n", WiFi.channel(i));
+      EEPROM.write(3, EEPROM.read(3) + 1);
+      EEPROM.commit();
 
       if (i == 0)
       {
-        display.print(WiFi.SSID(i));
-        display.print(",");
-        display.println(WiFi.RSSI(i));
-        display.println();
-        display.print(WiFi.SSID(n - 1));
-        display.print(",");
-        display.println(WiFi.RSSI(n - 1));
-        display.println();
-        display.print("Eprom: ");
-        display.println(EEPROM.read(0));
-        display.println();
+        display.printf("%s,%d \n \n", WiFi.SSID(i), WiFi.RSSI(i));
+        display.printf("%s,%d \n \n", WiFi.SSID(n - 1), WiFi.RSSI(n - 1));
+        display.printf("Eeprom: %d \n", EEPROM.read(0));
       }
     }
     excel.close();
-    flag = true;
     display.println("CSV pronto");
     Serial.println("CSV pronto");
   }
@@ -242,18 +227,19 @@ void setup()
   EEPROM.begin(12);
   // EEPROM.write(0, 76);
   // EEPROM.commit();
-  Serial.println(EEPROM.read(0));
-  display.print("EEPROM: ");
-  display.println(EEPROM.read(0));
+  Serial.printf("Eeprom: %d \n", EEPROM.read(0));
+  display.printf("Eeprom: %d \n", EEPROM.read(0));
 
   conectar();
-  //WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   ini_panilha();
 
-  File csv = SPIFFS.open("/dados.txt");
-  while (csv.available())
-    Serial.write(csv.read());
-  csv.close();
+  dados = SPIFFS.open("/dados.txt");
+  while (dados.available())
+    Serial.write(dados.read());
+
+  dados = SPIFFS.open("/dados.txt");
+  for (int i = 1; i <= EEPROM.read(4); i++)
+    dados.readStringUntil(',');
 
   temp = millis();
   while (!digitalRead(bot))
@@ -262,12 +248,15 @@ void setup()
       File reset = SPIFFS.open("/dados.txt", FILE_WRITE);
       reset.print("");
       EEPROM.write(4, 0);
+      EEPROM.write(3, 0);
       EEPROM.commit();
       Serial.println("csv resetado");
       display.println("csv resetado");
       delay(3000);
       break;
     }
+  
+  Serial.println("preparado");
 }
 
 void loop()
