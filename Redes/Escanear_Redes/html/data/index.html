@@ -7,10 +7,23 @@
   <link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
-  <p>Eeprom: <strong> %EEPROM%</strong></p>
+  <p>Num: <strong> %Num%</strong></p>
+  <p>Area: <strong> %value7%</strong></p>
   <p><a href="/exemplo"><button class="button">Exemplo</button></a></p>
   <p><a href="/reset"><button class="button button2">Resetar</button></a></p>
   <p><a href="/print"><button class="button button3">Printar</button></a></p>
   <p><a href="/discon"><button class="button button4">Desconectar</button></a></p>
+  <form action="/enviar_numero" method="post">
+    <label for="numero">Numero:</label>
+    <input type="number" id="numero" name="numero" required>
+    <br>
+    <button type="submit">Enviar</button>
+  </form>
+  <form action="/enviar_value7" method="post">
+    <label for="value7">Area:</label>
+    <input type="text" id="value7" name="value7">
+    <br>
+    <button type="submit">Enviar</button>
+  </form>
 </body>
 </html>
