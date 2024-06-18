@@ -1,4 +1,4 @@
-//* Identificar_camera
+//* Edge_Impulse
 
 /**
  * Run Edge Impulse FOMO model.
