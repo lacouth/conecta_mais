@@ -25,6 +25,7 @@
     let tagImg = document.getElementById("imagem")
     let enviarDados
     let receberDados
+    let receberInt
     const TAMANHO = 160 * 120
     let imageArray = []
 
@@ -35,25 +36,29 @@
             optionalServices: ['19b10000-e8f2-537e-4f6c-d104768a1213']
         })
         .then(device => {
-            
-            lblStatus.innerHTML = 'Status: Conectado ' + device.name
             return device.gatt.connect()
         })
         .then(server => {
+            lblStatus.innerHTML = 'Status: Conectado '
             return server.getPrimaryService('19b10000-e8f2-537e-4f6c-d104768a1213')
         })
         .then(service => {
             let promiseReceberDados = service.getCharacteristic('19b10000-e8f2-537e-4f6c-d104768a1214')
             let promiseEnviarDados =  service.getCharacteristic('19b10000-e8f2-537e-4f6c-d104768a1215')
-            return Promise.all([promiseEnviarDados,promiseReceberDados])
+            let promiseReceberInt = service.getCharacteristic('19b10000-e8f2-537e-4f6c-d104768a1216')
+            return Promise.all([promiseEnviarDados,promiseReceberDados, promiseReceberInt])
         })
-        .then( ([promiseEnviarDados,promiseReceberDados]) => {
+        .then( ([promiseEnviarDados,promiseReceberDados, promiseReceberInt]) => {
             
             enviarDados = promiseEnviarDados
             receberDados = promiseReceberDados
+            receberInt = promiseReceberInt
             
             receberDados.addEventListener('characteristicvaluechanged', valorAlterado)
             receberDados.startNotifications()
+
+            receberInt.addEventListener('characteristicvaluechanged', intRecebido)
+            receberInt.startNotifications()
 
             return 
         })
@@ -104,6 +109,10 @@
             
             imageArray = []
         }
+    }
+
+    function intRecebido(event){
+        lblData.innerHTML = "Valor: " + event.target.value
     }
 
 
