@@ -35,6 +35,12 @@ BLEUnsignedIntCharacteristic receberInt("19B10000-E8F2-537E-4F6C-D104768A1215", 
 
 int data = 0; // Variável para armazenar dados recebidos
 
+#define size_linha 800
+#define size_coluna 600
+
+#define resize_linha 160
+#define resize_coluna 120
+
 void setup() {
   Serial.begin(115200); 
   while (!Serial); 
@@ -63,7 +69,7 @@ void setup() {
   config.pin_reset = RESET_GPIO_NUM;
   config.xclk_freq_hz = 20000000; // Frequência do clock externo
   config.pixel_format = PIXFORMAT_GRAYSCALE; // Formato de pixel Grayscale para captura de imagem
-  config.frame_size = FRAMESIZE_QQVGA; // Tamanho do frame QQVGA (160x120)
+  config.frame_size = FRAMESIZE_SVGA; // Tamanho do frame SVGA (800x600)
   config.jpeg_quality = 10; // Qualidade JPEG (0-63)
   config.fb_count = 1; // Número de frame buffers
 
@@ -120,22 +126,40 @@ void dataWritten(BLEDevice central, BLECharacteristic characteristic) {
   if (receberInt.value() == 1) { 
     camera_fb_t * fb = esp_camera_fb_get();
     if (!fb) { 
-      Serial.println("Falha ao capturar imagem!");  
+      Serial.println("Falha ao capturar imagem!");
       return;
     }
 
     int imageOffset = 0; 
     uint8_t *img = fb->buf; 
-    while (imageOffset < fb->len) { 
+    uint8_t *img_size[size_linha][size_coluna];
+    int teste = 0;
+    Serial.println("0");
+    for(int l = 0; l < size_linha; l++)
+      for (int c = 0; c < size_coluna; c++)
+      {
+        img_size[l][c] = &img[teste];
+        teste++;
+      }
+      Serial.println("a");
+    teste = 0;
+    uint8_t img_enviar[resize_linha * resize_coluna];
+    for(int l = 0; l < resize_linha; l++)
+      for (int c = 0; c < resize_coluna; c++)
+      {
+        img_enviar[teste] = *img_size[l][c];
+        teste++;
+      } 
+      Serial.println("c");
+    while (imageOffset < fb->len ) { 
       int restante = fb->len - imageOffset; 
       int bytesToSend = restante < chunk ? restante : chunk; 
-      enviarImagem.writeValue(&img[imageOffset], bytesToSend);
+      enviarImagem.writeValue(&img_enviar[imageOffset], bytesToSend);
       imageOffset += bytesToSend;
     }
     
     Serial.print("Imagem enviada com sucesso! - ");
     Serial.println(imageOffset);
-
     
     esp_camera_fb_return(fb);
   }
