@@ -63,7 +63,7 @@ void setup() {
   config.pin_reset = RESET_GPIO_NUM;
   config.xclk_freq_hz = 20000000; // Frequência do clock externo
   config.pixel_format = PIXFORMAT_GRAYSCALE; // Formato de pixel Grayscale para captura de imagem
-  config.frame_size = FRAMESIZE_QQVGA; // Tamanho do frame QQVGA (160x120)
+  config.frame_size = FRAMESIZE_SVGA; // Tamanho do frame QQVGA (800x600)
   config.jpeg_quality = 10; // Qualidade JPEG (0-63)
   config.fb_count = 1; // Número de frame buffers
 
