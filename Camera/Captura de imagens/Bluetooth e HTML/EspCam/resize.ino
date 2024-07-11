@@ -35,11 +35,14 @@ BLEUnsignedIntCharacteristic receberInt("19B10000-E8F2-537E-4F6C-D104768A1215", 
 
 int data = 0; // Variável para armazenar dados recebidos
 
-#define size_linha 800
-#define size_coluna 600
+#define size_linha 320
+#define size_coluna 240
 
 #define resize_linha 160
 #define resize_coluna 120
+
+
+
 
 void setup() {
   Serial.begin(115200); 
@@ -67,9 +70,10 @@ void setup() {
   config.pin_sscb_scl = SIOC_GPIO_NUM;
   config.pin_pwdn = PWDN_GPIO_NUM;
   config.pin_reset = RESET_GPIO_NUM;
-  config.xclk_freq_hz = 20000000; // Frequência do clock externo
+  //config.xclk_freq_hz = 20000000; // Frequência do clock externo
+  config.xclk_freq_hz = 5000000; 
   config.pixel_format = PIXFORMAT_GRAYSCALE; // Formato de pixel Grayscale para captura de imagem
-  config.frame_size = FRAMESIZE_SVGA; // Tamanho do frame SVGA (800x600)
+  config.frame_size = FRAMESIZE_QVGA; // Tamanho do frame SVGA (800x600)
   config.jpeg_quality = 10; // Qualidade JPEG (0-63)
   config.fb_count = 1; // Número de frame buffers
 
@@ -120,11 +124,14 @@ void loop() {
 
 // Função de callback chamada quando o valor da característica receberInt é escrito
 void dataWritten(BLEDevice central, BLECharacteristic characteristic) {
+  uint8_t valor = receberInt.value();
   Serial.print("Valor Recebido: ");
-  Serial.println(receberInt.value());
+  Serial.println(valor);
   
-  if (receberInt.value() == 1) { 
+  if (valor == 1) { 
+    Serial.println("Preparando foto");
     camera_fb_t * fb = esp_camera_fb_get();
+    Serial.println("Foto tirada");
     if (!fb) { 
       Serial.println("Falha ao capturar imagem!");
       return;
@@ -132,13 +139,13 @@ void dataWritten(BLEDevice central, BLECharacteristic characteristic) {
 
     int imageOffset = 0; 
     uint8_t *img = fb->buf; 
-    uint8_t *img_size[size_linha][size_coluna];
+    uint8_t img_size[size_linha][size_coluna];
     int teste = 0;
     Serial.println("0");
     for(int l = 0; l < size_linha; l++)
       for (int c = 0; c < size_coluna; c++)
       {
-        img_size[l][c] = &img[teste];
+        img_size[l][c] = img[teste];
         teste++;
       }
       Serial.println("a");
@@ -147,12 +154,12 @@ void dataWritten(BLEDevice central, BLECharacteristic characteristic) {
     for(int l = 0; l < resize_linha; l++)
       for (int c = 0; c < resize_coluna; c++)
       {
-        img_enviar[teste] = *img_size[l][c];
+        img_enviar[teste] = img_size[l][c];
         teste++;
       } 
       Serial.println("c");
-    while (imageOffset < fb->len ) { 
-      int restante = fb->len - imageOffset; 
+    while (imageOffset < teste ) { 
+      int restante = teste - imageOffset; 
       int bytesToSend = restante < chunk ? restante : chunk; 
       enviarImagem.writeValue(&img_enviar[imageOffset], bytesToSend);
       imageOffset += bytesToSend;
