@@ -3,23 +3,23 @@
 #include "esp_camera.h"
 
 // Definir os pinos da câmera para a ESP32-CAM
-#define PWDN_GPIO_NUM     32  
-#define RESET_GPIO_NUM    -1  
-#define XCLK_GPIO_NUM      0  
-#define SIOD_GPIO_NUM     26  
-#define SIOC_GPIO_NUM     27  
+#define PWDN_GPIO_NUM     32  // Pino de energia da câmera
+#define RESET_GPIO_NUM    -1  // Pino de reset (não usado)
+#define XCLK_GPIO_NUM      0  // Pino do clock externo
+#define SIOD_GPIO_NUM     26  // Pino de dados I2C
+#define SIOC_GPIO_NUM     27  // Pino de clock I2C
 
-#define Y9_GPIO_NUM       35  
-#define Y8_GPIO_NUM       34  
-#define Y7_GPIO_NUM       39  
-#define Y6_GPIO_NUM       36  
-#define Y5_GPIO_NUM       21  
-#define Y4_GPIO_NUM       19  
-#define Y3_GPIO_NUM       18  
-#define Y2_GPIO_NUM        5  
-#define VSYNC_GPIO_NUM    25  
-#define HREF_GPIO_NUM     23  
-#define PCLK_GPIO_NUM     22 
+#define Y9_GPIO_NUM       35  // Pino de dados Y9
+#define Y8_GPIO_NUM       34  // Pino de dados Y8
+#define Y7_GPIO_NUM       39  // Pino de dados Y7
+#define Y6_GPIO_NUM       36  // Pino de dados Y6
+#define Y5_GPIO_NUM       21  // Pino de dados Y5
+#define Y4_GPIO_NUM       19  // Pino de dados Y4
+#define Y3_GPIO_NUM       18  // Pino de dados Y3
+#define Y2_GPIO_NUM        5  // Pino de dados Y2
+#define VSYNC_GPIO_NUM    25  // Pino de sincronização vertical
+#define HREF_GPIO_NUM     23  // Pino de referência horizontal
+#define PCLK_GPIO_NUM     22  // Pino de clock de pixel
 
 #define LED_PIN 33 // Definir o pino do LED para a ESP32-CAM
 
@@ -36,10 +36,10 @@ BLEUnsignedIntCharacteristic receberInt("19B10000-E8F2-537E-4F6C-D104768A1215", 
 int data = 0; // Variável para armazenar dados recebidos
 
 void setup() {
-  Serial.begin(115200); 
-  while (!Serial); 
+  Serial.begin(115200); // Iniciar a comunicação serial com baud rate de 115200
+  while (!Serial); // Esperar até que a comunicação serial esteja pronta
 
-  pinMode(LED_PIN, OUTPUT); 
+  pinMode(LED_PIN, OUTPUT); // Configurar o pino do LED como saída
 
   // Configurar as configurações da câmera
   camera_config_t config;
@@ -63,8 +63,8 @@ void setup() {
   config.pin_reset = RESET_GPIO_NUM;
   config.xclk_freq_hz = 20000000; // Frequência do clock externo
   config.pixel_format = PIXFORMAT_GRAYSCALE; // Formato de pixel Grayscale para captura de imagem
-  config.frame_size = FRAMESIZE_SVGA; // Tamanho do frame QQVGA (800x600)
-  config.jpeg_quality = 10; // Qualidade JPEG (0-63)
+  config.frame_size = FRAMESIZE_SVGA; // Tamanho do frame SVGA (800x600)
+  config.jpeg_quality = 10; // Qualidade JPEG (0-63), 0 é a maior qualidade
   config.fb_count = 1; // Número de frame buffers
 
   // Inicializar a câmera
@@ -80,16 +80,16 @@ void setup() {
   }
 
   // Configurar BLE
-  BLE.setLocalName("ESP32-CAM");
-  BLE.setAdvertisedService(esp32Service); 
-  esp32Service.addCharacteristic(enviarImagem);
-  esp32Service.addCharacteristic(receberInt);
+  BLE.setLocalName("ESP32-CAM"); // Nome do dispositivo BLE
+  BLE.setAdvertisedService(esp32Service); // Configurar o serviço BLE a ser anunciado
+  esp32Service.addCharacteristic(enviarImagem); // Adicionar característica de enviar imagem
+  esp32Service.addCharacteristic(receberInt); // Adicionar característica de receber inteiro
 
-  BLE.addService(esp32Service);
+  BLE.addService(esp32Service); // Adicionar o serviço BLE
 
-  receberInt.setEventHandler(BLEWritten, dataWritten);
+  receberInt.setEventHandler(BLEWritten, dataWritten); // Definir manipulador de evento para quando o valor da característica receberInt for escrito
 
-  BLE.advertise();
+  BLE.advertise(); // Começar a anunciar o serviço BLE
 
   Serial.println("Bluetooth® device active, waiting for connections...");
 }
@@ -97,16 +97,16 @@ void setup() {
 void loop() {
   BLEDevice central = BLE.central(); // Procurar por dispositivos BLE centrais conectados
 
-  if (central) { 
+  if (central) { // Se um dispositivo central se conectar
     Serial.print("Connected to central: ");
     Serial.println(central.address());
-    digitalWrite(LED_PIN, LOW);
+    digitalWrite(LED_PIN, LOW); // Acender o LED
 
     while (central.connected()) {
-      
+      // Aqui você pode adicionar código para executar enquanto o dispositivo central está conectado
     }
 
-    digitalWrite(LED_PIN, HIGH);
+    digitalWrite(LED_PIN, HIGH); // Apagar o LED
     Serial.print("Disconnected from central: ");
     Serial.println(central.address());
   }
@@ -115,28 +115,48 @@ void loop() {
 // Função de callback chamada quando o valor da característica receberInt é escrito
 void dataWritten(BLEDevice central, BLECharacteristic characteristic) {
   Serial.print("Valor Recebido: ");
-  Serial.println(receberInt.value());
+  Serial.println(receberInt.value()); // Imprimir o valor recebido
   
-  if (receberInt.value() == 1) { 
-    camera_fb_t * fb = esp_camera_fb_get();
-    if (!fb) { 
-      Serial.println("Falha ao capturar imagem!");  
+  if (receberInt.value() == 1) { // Se o valor recebido for 1
+    camera_fb_t * fb = esp_camera_fb_get(); // Capturar uma imagem
+    if (!fb) { // Se a captura da imagem falhar
+      Serial.println("Falha ao capturar imagem!");
       return;
     }
 
-    int imageOffset = 0; 
-    uint8_t *img = fb->buf; 
-    while (imageOffset < fb->len) { 
-      int restante = fb->len - imageOffset; 
-      int bytesToSend = restante < chunk ? restante : chunk; 
-      enviarImagem.writeValue(&img[imageOffset], bytesToSend);
-      imageOffset += bytesToSend;
-    }
-    
-    Serial.print("Imagem enviada com sucesso! - ");
-    Serial.println(imageOffset);
+    // Recortar a imagem em partes de 160x120 e enviar
+    sendImageChunks(fb);
 
-    
+    // Liberar a memória da imagem
     esp_camera_fb_return(fb);
+  }
+}
+
+void sendImageChunks(camera_fb_t * fb) {
+  int imgWidth = 800;
+  int imgHeight = 600;
+  int chunkWidth = 160;
+  int chunkHeight = 120;
+  
+  for (int y = 0; y < imgHeight; y += chunkHeight) {
+    for (int x = 0; x < imgWidth; x += chunkWidth) {
+      // Calcular o endereço do pixel inicial do bloco
+      int startIndex = y * imgWidth + x;
+
+      // Enviar o bloco de pixels via BLE
+      for (int i = 0; i < chunkHeight; i++) {
+        int offset = startIndex + i * imgWidth;
+        enviarImagem.writeValue(&fb->buf[offset], chunkWidth);
+      }
+      
+      Serial.print("Bloco enviado - Início: ");
+      Serial.print(x);
+      Serial.print(", ");
+      Serial.print(y);
+      Serial.print(" Tamanho: ");
+      Serial.print(chunkWidth);
+      Serial.print(", ");
+      Serial.println(chunkHeight);
+    }
   }
 }
