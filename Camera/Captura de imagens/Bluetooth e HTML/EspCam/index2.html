@@ -1,100 +1,83 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ESP32-CAM BLE Interface</title>
-    <style>
-        #imageCanvas {
-            border: 1px solid black;
-        }
-    </style>
+  <title>ESP32-CAM BLE Interface</title>
 </head>
 <body>
-    <h1>ESP32-CAM BLE Interface</h1>
-    <button id="connect">Conectar</button>
-    <button id="capture">Capturar Imagem</button>
-    <div id="status"></div>
-    <canvas id="imageCanvas" width="800" height="600"></canvas>
+  <h1>ESP32-CAM BLE Interface</h1>
+  <button id="connect">Conectar à ESP32-CAM</button>
+  <button id="capture">Capturar Imagem</button>
+  <div id="output"></div>
+  
+  <script>
+    let esp32Device;
+    let enviarImagemCharacteristic;
+    let receberIntCharacteristic;
 
-    <script>
-        let device;
-        let server;
-        let esp32ServiceUUID = '19b10000-e8f2-537e-4f6c-d104768a1213';
-        let sendImageCharacteristicUUID = '19b10000-e8f2-537e-4f6c-d104768a1214';
-        let receiveIntCharacteristicUUID = '19b10000-e8f2-537e-4f6c-d104768a1215';
-        let sendImageCharacteristic;
-        let receiveIntCharacteristic;
-        const canvas = document.getElementById('imageCanvas');
-        const ctx = canvas.getContext('2d');
-        const chunkSize = 100; // Tamanho do fragmento de dados
+    document.getElementById('connect').addEventListener('click', async () => {
+      try {
+        console.log('Solicitando dispositivo BLE...');
+        esp32Device = await navigator.bluetooth.requestDevice({
+          filters: [{ name: 'ESP32-CAM' }],
+          optionalServices: ['19B10000-E8F2-537E-4F6C-D104768A1213']
+        });
+        
+        console.log('Conectando ao GATT Server...');
+        const server = await esp32Device.gatt.connect();
+        
+        console.log('Obtendo serviço...');
+        const service = await server.getPrimaryService('19B10000-E8F2-537E-4F6C-D104768A1213');
+        
+        console.log('Obtendo característica enviarImagem...');
+        enviarImagemCharacteristic = await service.getCharacteristic('19B10000-E8F2-537E-4F6C-D104768A1214');
+        
+        console.log('Obtendo característica receberInt...');
+        receberIntCharacteristic = await service.getCharacteristic('19B10000-E8F2-537E-4F6C-D104768A1215');
+        
+        console.log('Conectado com sucesso!');
+      } catch (error) {
+        console.log('Erro: ' + error);
+      }
+    });
 
-        document.getElementById('connect').addEventListener('click', async () => {
-            try {
-                // Solicitar a conexão com o dispositivo BLE
-                device = await navigator.bluetooth.requestDevice({
-                    filters: [{ services: [esp32ServiceUUID] }]
-                });
-                server = await device.gatt.connect();
-                const service = await server.getPrimaryService(esp32ServiceUUID);
-                sendImageCharacteristic = await service.getCharacteristic(sendImageCharacteristicUUID);
-                receiveIntCharacteristic = await service.getCharacteristic(receiveIntCharacteristicUUID);
+    document.getElementById('capture').addEventListener('click', async () => {
+      if (!receberIntCharacteristic) {
+        console.log('Não conectado ao dispositivo');
+        return;
+      }
 
-                document.getElementById('status').innerText = 'Conectado ao dispositivo ESP32-CAM';
-            } catch (error) {
-                console.error('Falha na conexão:', error);
-                document.getElementById('status').innerText = 'Falha na conexão';
-            }
+      try {
+        console.log('Enviando comando para capturar imagem...');
+        await receberIntCharacteristic.writeValue(Uint8Array.of(1));
+        
+        console.log('Recebendo dados da imagem...');
+        receberImagem();
+      } catch (error) {
+        console.log('Erro: ' + error);
+      }
+    });
+
+    async function receberImagem() {
+      if (!enviarImagemCharacteristic) {
+        console.log('Não conectado ao dispositivo');
+        return;
+      }
+
+      try {
+        let imageData = [];
+        enviarImagemCharacteristic.addEventListener('characteristicvaluechanged', (event) => {
+          const value = new Uint8Array(event.target.value.buffer);
+          imageData.push(...value);
+
+          console.log('Dados recebidos: ', value);
         });
 
-        document.getElementById('capture').addEventListener('click', async () => {
-            try {
-                if (!receiveIntCharacteristic) {
-                    console.error('Nenhum dispositivo conectado');
-                    document.getElementById('status').innerText = 'Nenhum dispositivo conectado';
-                    return;
-                }
-
-                // Enviar o comando para capturar uma imagem
-                await receiveIntCharacteristic.writeValue(new Uint8Array([1]));
-
-                // Limpar o canvas antes de desenhar a nova imagem
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-                // Receber a imagem em fragmentos
-                let receivedData = new Uint8Array(800 * 600); // Buffer para armazenar os dados da imagem
-                let receivedBytes = 0;
-
-                while (receivedBytes < receivedData.length) {
-                    const value = await sendImageCharacteristic.readValue();
-                    const chunk = new Uint8Array(value.buffer);
-
-                    receivedData.set(chunk, receivedBytes);
-                    receivedBytes += chunk.length;
-
-                    document.getElementById('status').innerText = `Recebendo imagem: ${Math.min((receivedBytes / receivedData.length) * 100, 100).toFixed(2)}%`;
-                }
-
-                // Desenhar a imagem no canvas
-                drawImage(receivedData);
-                document.getElementById('status').innerText = 'Imagem capturada e exibida';
-            } catch (error) {
-                console.error('Falha ao enviar comando:', error);
-                document.getElementById('status').innerText = 'Falha ao enviar comando';
-            }
-        });
-
-        function drawImage(imageData) {
-            const imageDataObj = ctx.createImageData(800, 600);
-            for (let i = 0; i < imageData.length; i++) {
-                const pixelIndex = i * 4;
-                imageDataObj.data[pixelIndex] = imageData[i]; // R
-                imageDataObj.data[pixelIndex + 1] = imageData[i]; // G
-                imageDataObj.data[pixelIndex + 2] = imageData[i]; // B
-                imageDataObj.data[pixelIndex + 3] = 255; // Alpha
-            }
-            ctx.putImageData(imageDataObj, 0, 0);
-        }
-    </script>
+        await enviarImagemCharacteristic.startNotifications();
+        console.log('Recebendo dados...');
+      } catch (error) {
+        console.log('Erro: ' + error);
+      }
+    }
+  </script>
 </body>
 </html>
