@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32-CAM BLE Interface</title>
+</head>
+<body>
+    <h1>ESP32-CAM BLE Interface</h1>
+    <button id="connect">Conectar</button>
+    <button id="capture">Capturar Imagem</button>
+    <div id="status"></div>
+
+    <script>
+        let device;
+        let server;
+        let esp32ServiceUUID = '19b10000-e8f2-537e-4f6c-d104768a1213';
+        let sendImageCharacteristicUUID = '19b10000-e8f2-537e-4f6c-d104768a1214';
+        let receiveIntCharacteristicUUID = '19b10000-e8f2-537e-4f6c-d104768a1215';
+        let receiveIntCharacteristic;
+
+        document.getElementById('connect').addEventListener('click', async () => {
+            try {
+                // Solicitar a conexão com o dispositivo BLE
+                device = await navigator.bluetooth.requestDevice({
+                    filters: [{ services: [esp32ServiceUUID] }]
+                });
+                server = await device.gatt.connect();
+                const service = await server.getPrimaryService(esp32ServiceUUID);
+                receiveIntCharacteristic = await service.getCharacteristic(receiveIntCharacteristicUUID);
+
+                document.getElementById('status').innerText = 'Conectado ao dispositivo ESP32-CAM';
+            } catch (error) {
+                console.error('Falha na conexão:', error);
+                document.getElementById('status').innerText = 'Falha na conexão';
+            }
+        });
+
+        document.getElementById('capture').addEventListener('click', async () => {
+            try {
+                if (!receiveIntCharacteristic) {
+                    console.error('Nenhum dispositivo conectado');
+                    document.getElementById('status').innerText = 'Nenhum dispositivo conectado';
+                    return;
+                }
+
+                // Enviar o comando para capturar uma imagem
+                await receiveIntCharacteristic.writeValue(new Uint8Array([1]));
+
+                // Esperar pelo recebimento dos dados da imagem (não implementado aqui)
+                // Você pode adicionar um código para receber e processar os dados da imagem aqui
+
+                document.getElementById('status').innerText = 'Comando de captura enviado';
+            } catch (error) {
+                console.error('Falha ao enviar comando:', error);
+                document.getElementById('status').innerText = 'Falha ao enviar comando';
+            }
+        });
+    </script>
+</body>
+</html>
