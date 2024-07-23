@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <button id="btnConectar">Conectar</button>
+    <p id="lblStatus">Status: desconectado</p>
+    <p id="lblData">Valor: 0</p>
+    <button id="btnEnviar">Enviar</button> <br>
+    <canvas id="imageCanvas"></canvas>
+</body>
+</html>
+
+<script>
+    let btnConectar = document.getElementById('btnConectar')
+    let lblStatus = document.getElementById('lblStatus')
+    let lblData = document.getElementById('lblData')
+    let btnEnviar = document.getElementById("btnEnviar")
+    let tagImg = document.getElementById("imagem")
+    let enviarDados
+    let receberDados
+    const TAMANHO = 160 * 120
+    let imageArray = []
+    let dispositivo
+    
+
+    
+    btnConectar.addEventListener('click',() => {
+        navigator.bluetooth.requestDevice({
+            acceptAllDevices : true,
+            optionalServices: ['19b10000-e8f2-537e-4f6c-d104768a1213']
+        })
+        .then(device => {
+            
+            // dispositivo = device
+            return device.gatt.connect()
+        })
+        .then(server => {
+            lblStatus.innerHTML = 'Status: Conectado '
+            return server.getPrimaryService('19b10000-e8f2-537e-4f6c-d104768a1213')
+        })
+        .then(service => {
+            let promiseReceberDados = service.getCharacteristic('19b10000-e8f2-537e-4f6c-d104768a1214')
+            let promiseEnviarDados =  service.getCharacteristic('19b10000-e8f2-537e-4f6c-d104768a1215')
+            return Promise.all([promiseEnviarDados,promiseReceberDados])
+        })
+        .then( ([promiseEnviarDados,promiseReceberDados]) => {
+            
+            enviarDados = promiseEnviarDados
+            receberDados = promiseReceberDados
+            
+            receberDados.addEventListener('characteristicvaluechanged', valorAlterado)
+            receberDados.startNotifications()
+
+            // return enviarDados.writeValue(0)
+        })
+
+    })
+
+    btnEnviar.addEventListener('click', () => {
+        let valorEnviar = Uint8Array.of(1)
+        enviarDados.writeValue(valorEnviar)
+    })
+
+    function valorAlterado(event) {
+        
+        
+        let value = event.target.value
+        let len = value.byteLength
+        let dataArray = new Uint8Array(len)
+        for(let i = 0; i < len; i++){
+            dataArray[i] = value.getUint8(i)
+        }
+        imageArray = imageArray.concat(Array.from(dataArray))
+        if(imageArray.length >= TAMANHO){
+            console.log(imageArray.length);
+            const canvas = document.getElementById('imageCanvas');
+            const ctx = canvas.getContext('2d');
+            let imageData = ctx.createImageData(160,120);
+            
+
+            for (let i = 0, j = 0; i < imageArray.length; i++, j += 4) {
+                imageData.data[j] = imageArray[i]
+                imageData.data[j + 1] = imageArray[i];
+                imageData.data[j + 2] = imageArray[i];
+                imageData.data[j + 3] = 255;
+            }
+
+            ctx.putImageData(imageData, 0, 0); 
+            imageArray = []
+        }
+    }
+
+
+</script>
