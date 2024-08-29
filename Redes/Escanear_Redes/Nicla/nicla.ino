@@ -2,9 +2,10 @@
 #include <ArduinoBLE.h>
 #include <WiFi.h>
 
-const int chunk = 20;
-BLEService esp32Service("19B10000-E8F2-537E-4F6C-D104768A1213");
-BLECharacteristic enviarcsv("19B10000-E8F2-537E-4F6C-D104768A1214", BLERead | BLEWrite);
+const int chunk = 100;
+BLEService niclaService("19B10000-E8F2-537E-4F6C-D104768A1213");
+BLECharacteristic enviarcsv("19B10000-E8F2-537E-4F6C-D104768A1214", BLERead | BLEWrite, chunk);
+BLEUnsignedIntCharacteristic receberInt("19B10000-E8F2-537E-4F6C-D104768A1215", BLERead | BLEWrite);
 
 void setup() {
   Serial.begin(9600);
@@ -16,10 +17,13 @@ void setup() {
   BLE.setLocalName("NICLA-VISON");
   BLE.setAdvertisedService(niclaService);
   niclaService.addCharacteristic(enviarcsv);
+  niclaService.addCharacteristic(receberInt);
 
   BLE.addService(niclaService);
 
-  enviarcsv.setEventHandler(BLEWritten, csvredes);
+  receberInt.setEventHandler(BLEWritten, csvredes);
+
+  //enviarcsv.setEventHandler(BLEWritten, csvredes);
 
   BLE.advertise();
 }
@@ -46,14 +50,32 @@ void csvredes(BLEDevice central, BLECharacteristic characteristic) {
   Serial.println(valor);
 
   if (valor == 1) {
+    String exemplo = "";
     int n = WiFi.scanNetworks();
-    for (int i = 0; i < n; ++i) {
-      // value1 = EEPROM.read(eeprom_num);
-      // value2 = i + 1;
-      // value3 = WiFi.SSID(i);
-      // value4 = WiFi.BSSIDstr(i);
-      // value5 = WiFi.RSSI(i);
-      // value6 = WiFi.channel(i);
+    for (int i = 0; i < n; ++i){
+      byte bssid[6];
+      WiFi.BSSID(i, bssid);
+      exemplo += String(WiFi.SSID(i)) + "," + MacAddressStr(bssid) + "," + String(WiFi.RSSI(i)) + "\n"; 
     }
+      // lembrar se consegue enviar tudo
+    enviarcsv.writeValue(exemplo.c_str());
   }
+}
+
+String MacAddressStr(uint8_t mac[]) {
+  String macstr = "";
+  for (int i = 0; i < 6; i++) {
+    if (i > 0) {
+      //Serial.print(":");
+      macstr += ":";
+    }
+    if (mac[i] < 16) {
+      //Serial.print("0");
+      macstr += "0";
+    }
+    macstr += String(mac[i], HEX);
+    //Serial.print(mac[i], HEX);
+  }
+  return macstr;
+  //Serial.println();
 }
