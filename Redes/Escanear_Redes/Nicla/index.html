@@ -12,6 +12,7 @@
     <p id="lblData">Valor: 0</p>
     <button id="btnEnviar">Enviar</button> <br>
     <canvas id="imageCanvas"></canvas>
+    <div id = "print">  </div>
 </body>
 </html>
 
@@ -70,6 +71,9 @@
         
         
         let value = event.target.value
+        console.log(value)
+        let div = document.getElementById("print")
+        div.inneeHTML += value
         console.log(value)
         let len = value.byteLength
         /*let dataArray = new Uint8Array(len)
