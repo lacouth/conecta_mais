@@ -63,7 +63,7 @@ void dataWritten(BLEDevice central, BLECharacteristic characteristic) {
     for (int i = 0; i < n; ++i){
       byte bssid[6];
       WiFi.BSSID(i, bssid);
-      exemplo = String(WiFi.SSID(i)) + "," + MacAddressStr(bssid) + "," + String(WiFi.RSSI(i));
+      exemplo = String(WiFi.SSID(i)) + "," + MacAddressStr(bssid) + "," + String(WiFi.RSSI(i) + "," + WiFi.channel(i));
       Serial.println(exemplo);
       enviarImagem.writeValue(exemplo.c_str());
     }
