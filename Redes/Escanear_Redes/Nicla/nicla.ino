@@ -1,64 +1,73 @@
-#include <Arduino.h>
 #include <ArduinoBLE.h>
 #include <WiFi.h>
 
-const int chunk = 100;
 BLEService niclaService("19B10000-E8F2-537E-4F6C-D104768A1213");
-BLECharacteristic enviarcsv("19B10000-E8F2-537E-4F6C-D104768A1214", BLERead | BLEWrite, chunk);
+
+const int chunk = 100;
+
+BLECharacteristic enviarImagem("19B10000-E8F2-537E-4F6C-D104768A1214", BLERead | BLENotify, chunk);
 BLEUnsignedIntCharacteristic receberInt("19B10000-E8F2-537E-4F6C-D104768A1215", BLERead | BLEWrite);
 
 void setup() {
   Serial.begin(9600);
 
+  pinMode(LED_BUILTIN, OUTPUT);
+
   while (!BLE.begin()) {
-    Serial.println("Falha ao iniciar o BLE!");
+    Serial.println("falha ao iniciar o BLE!");
   }
 
-  BLE.setLocalName("NICLA-VISON");
+  BLE.setLocalName("NiclaVision");
   BLE.setAdvertisedService(niclaService);
-  niclaService.addCharacteristic(enviarcsv);
+  niclaService.addCharacteristic(enviarImagem);
   niclaService.addCharacteristic(receberInt);
 
   BLE.addService(niclaService);
-
-  receberInt.setEventHandler(BLEWritten, csvredes);
-
-  //enviarcsv.setEventHandler(BLEWritten, csvredes);
+  
+  receberInt.setEventHandler(BLEWritten, dataWritten);
 
   BLE.advertise();
+
+  Serial.println("Esperando conexão do Bluetooth®");
 }
 
 void loop() {
+  
   BLEDevice central = BLE.central();
 
-  if (central) {  // Se um dispositivo central se conectar
+  
+  if (central) {
     Serial.print("Connected to central: ");
+  
     Serial.println(central.address());
+    digitalWrite(LED_BUILTIN, LOW);
 
     while (central.connected()) {
-      // Aqui você pode adicionar código para executar enquanto o dispositivo central está conectado
+      // if(Serial.available())
+      //   updateData();
     }
-
+    
+    digitalWrite(LED_BUILTIN, HIGH);
     Serial.print("Disconnected from central: ");
     Serial.println(central.address());
   }
 }
 
-void csvredes(BLEDevice central, BLECharacteristic characteristic) {
-  uint8_t valor = receberInt.value();
+void dataWritten(BLEDevice central, BLECharacteristic characteristic) {
+ 
   Serial.print("Valor Recebido: ");
-  Serial.println(valor);
-
-  if (valor == 1) {
+  Serial.println(receberInt.value());
+  if(receberInt.value() == 1 ){
     String exemplo = "";
     int n = WiFi.scanNetworks();
     for (int i = 0; i < n; ++i){
       byte bssid[6];
       WiFi.BSSID(i, bssid);
-      exemplo += String(WiFi.SSID(i)) + "," + MacAddressStr(bssid) + "," + String(WiFi.RSSI(i)) + "\n"; 
+      exemplo = String(WiFi.SSID(i)) + "," + MacAddressStr(bssid) + "," + String(WiFi.RSSI(i));
+      Serial.println(exemplo);
+      enviarImagem.writeValue(exemplo.c_str());
     }
-      // lembrar se consegue enviar tudo
-    enviarcsv.writeValue(exemplo.c_str());
+    Serial.println("Enviado");
   }
 }
 
