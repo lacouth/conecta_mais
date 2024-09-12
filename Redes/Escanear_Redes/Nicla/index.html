@@ -1,6 +1,6 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
+<html lang="en"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
@@ -10,23 +10,32 @@
     <button id="btnConectar">Conectar</button>
     <p id="lblStatus">Status: desconectado</p>
     <p id="lblData">Valor: 0</p>
+    <label for="local">Local: </label>
+    <input type="text" id="local" name="local">
     <button id="btnEnviar">Enviar</button> <br>
-    <canvas id="imageCanvas"></canvas>
-    <div id = "print">  </div>
-</body>
-</html>
+
+    <ol id="dadosCSV"></ol>
+
+    
+    <button id="baixarCSV" >Baixar Dados</button>
+
+
+
+
 
 <script>
     let btnConectar = document.getElementById('btnConectar')
     let lblStatus = document.getElementById('lblStatus')
     let lblData = document.getElementById('lblData')
+    let input = document.getElementById("inputNumber")
     let btnEnviar = document.getElementById("btnEnviar")
-    let tagImg = document.getElementById("imagem")
+    let dadosCSV = document.getElementById("dadosCSV")
+    let btnBaixarCSV = document.getElementById("baixarCSV")
+    let inputLocal = document.getElementById('local')
     let enviarDados
     let receberDados
-    const TAMANHO = 160 * 120
-    let imageArray = []
     let dispositivo
+    let redesCSV = "data:text/csv;charset=utf-8,"
     
 
     
@@ -71,34 +80,31 @@
         
         
         let value = event.target.value
-        console.log(value)
-        let div = document.getElementById("print")
-        div.inneeHTML += value
-        console.log(value)
+        let local = inputLocal.value
         let len = value.byteLength
-        /*let dataArray = new Uint8Array(len)
+        let dataArray = new Uint8Array(len)
         for(let i = 0; i < len; i++){
             dataArray[i] = value.getUint8(i)
         }
-        imageArray = imageArray.concat(Array.from(dataArray))
-        if(imageArray.length >= TAMANHO){
-            console.log(imageArray.length);
-            const canvas = document.getElementById('imageCanvas');
-            const ctx = canvas.getContext('2d');
-            let imageData = ctx.createImageData(160,120);
-            
-
-            for (let i = 0, j = 0; i < imageArray.length; i++, j += 4) {
-                imageData.data[j] = imageArray[i]
-                imageData.data[j + 1] = imageArray[i];
-                imageData.data[j + 2] = imageArray[i];
-                imageData.data[j + 3] = 255;
-            }
-
-            ctx.putImageData(imageData, 0, 0); 
-            imageArray = []
-        }*/
+        var string = new TextDecoder().decode(dataArray);
+        dadosCSV.innerHTML += '<li>' + string + ',' + local + '</li>' 
+        console.log(string)
+        redesCSV += string + ',' + local + '\n'
     }
 
+    btnBaixarCSV.addEventListener('click',()=>{
+        var encodedUri = encodeURI(redesCSV);
+        // window.open(encodedUri);
 
-</script>
+        // var encodedUri = encodeURI(csvContent);
+        var link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "dados.csv");
+        document.body.appendChild(link); // Required for FF
+
+        link.click();
+
+    })
+
+
+</script></body></html>
