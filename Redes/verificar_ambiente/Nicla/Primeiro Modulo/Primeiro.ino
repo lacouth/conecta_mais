@@ -41,28 +41,28 @@ void verificar_ambiente()
       switch (regressor.predict(x))
       {
       case 0:
-        achado = "cod_eng";
+        achado = "Afericao";
         break;
       case 1:
-        achado = "fibra"; 
+        achado = "Auditorio engenharia"; 
         break;
       case 2:
-        achado = "aferi";
+        achado = "Fibras oticas";
         break;
       case 3:
-        achado = "aud";
+        achado = "Instrumento biomedicos";
         break;
       case 4:
-        achado = "biomedi"; 
+        achado = "Medidas telefonicas"; 
         break;
       case 5:
-        achado = "med_tele"; 
+        achado = "Pesquisa engenharia"; 
         break;
       case 6:
-        achado = "pesq_eng"; 
+        achado = "Didatica praticas"; 
         break;
       case 7:
-        achado = "prati";
+        achado = "Telefonia";
         break;
       default:
         break;
