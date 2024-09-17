@@ -9,8 +9,8 @@ const int chunk = 100;
 BLECharacteristic enviarImagem("19B10000-E8F2-537E-4F6C-D104768A1214", BLERead | BLENotify, chunk);
 BLEUnsignedIntCharacteristic receberInt("19B10000-E8F2-537E-4F6C-D104768A1215", BLERead | BLEWrite);
 
-#include "RandomForestClassifier.h"
-Eloquent::ML::Port::RandomForest regressor;
+#include "DecisionTreeClassifier.h"
+Eloquent::ML::Port::DecisionTree regressor;
 
 String achado = "";
 
@@ -24,7 +24,7 @@ void verificar_ambiente()
 {
   n = WiFi.scanNetworks();
   
-  double x[macs] = {0.0};
+  float x[macs] = {0.0};
 
   for (int i = 0; i < n; i++)
   {
@@ -63,9 +63,6 @@ void verificar_ambiente()
         break;
       case 7:
         achado = "prati";
-        break;
-      case 8:
-        achado = "telefo";
         break;
       default:
         break;
