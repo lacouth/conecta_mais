@@ -1,5 +1,13 @@
 #include <ArduinoBLE.h>
 #include <WiFi.h>
+#include <Wire.h>
+#include <VL53L1X.h>
+
+VL53L1X proximity;
+bool blinkState = false;
+int reading = 0;
+int timeStart = 0;
+int blinkTime = 2000;
 
 BLEService niclaService("19B10000-E8F2-537E-4F6C-D104768A1213");
 
@@ -11,7 +19,21 @@ BLEUnsignedIntCharacteristic receberInt("19B10000-E8F2-537E-4F6C-D104768A1215", 
 void setup() {
   Serial.begin(9600);
 
-  pinMode(LED_BUILTIN, OUTPUT);
+  Wire1.begin();
+  Wire1.setClock(400000); // use 400 kHz I2C
+  proximity.setBus(&Wire1);
+
+  pinMode(LEDB, OUTPUT);
+  digitalWrite(LEDB, blinkState);
+
+  if (!proximity.init()) {
+    Serial.println("Failed to detect and initialize sensor!");
+    while (1);
+  }
+
+  proximity.setDistanceMode(VL53L1X::Long);
+  proximity.setMeasurementTimingBudget(10000);
+  proximity.startContinuous(10);
 
   while (!BLE.begin()) {
     Serial.println("falha ao iniciar o BLE!");
@@ -32,22 +54,26 @@ void setup() {
 }
 
 void loop() {
-  
-  BLEDevice central = BLE.central();
 
+
+  BLEDevice central = BLE.central();
   
   if (central) {
     Serial.print("Connected to central: ");
   
     Serial.println(central.address());
-    digitalWrite(LED_BUILTIN, LOW);
 
     while (central.connected()) {
-      // if(Serial.available())
-      //   updateData();
+      reading = proximity.read();
+
+      if (millis() - timeStart >= reading) {
+      digitalWrite(LEDB, blinkState);
+      timeStart = millis();
+
+      blinkState = !blinkState;
+      }
+      
     }
-    
-    digitalWrite(LED_BUILTIN, HIGH);
     Serial.print("Disconnected from central: ");
     Serial.println(central.address());
   }
@@ -63,7 +89,7 @@ void dataWritten(BLEDevice central, BLECharacteristic characteristic) {
     for (int i = 0; i < n; ++i){
       byte bssid[6];
       WiFi.BSSID(i, bssid);
-      exemplo = String(WiFi.SSID(i)) + "," + MacAddressStr(bssid) + "," + String(WiFi.RSSI(i) + "," + WiFi.channel(i));
+      exemplo = String(WiFi.SSID(i)) + "," + MacAddressStr(bssid) + "," + WiFi.RSSI(i) + "," + WiFi.channel(i);
       Serial.println(exemplo);
       enviarImagem.writeValue(exemplo.c_str());
     }
