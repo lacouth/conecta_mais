@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
@@ -9,91 +11,119 @@
 <body>
     <button id="btnConectar">Conectar</button>
     <p id="lblStatus">Status: desconectado</p>
-    <p id="lblData">Valor: 0</p>
-    <button id="btnEnviar">Enviar</button> <br>
-    <canvas id="imageCanvas"></canvas>
-</body>
-</html>
+    <label for="Num">Num: </label>
+    <input type="number" id="num" value="0">
+    <br> 
+    <label for="local">Local: </label>
+    <input type="text" id="local" name="local">
+    <br> 
+    <button id="btnEnviar">Enviar</button> 
+    <br> 
+    <p id="pronto"> Esperando </p> 
+    <br>
+    <button id="baixarCSV">Baixar Dados</button>
+    <ol id="dadosCSV"></ol>
 
-<script>
-    let btnConectar = document.getElementById('btnConectar')
-    let lblStatus = document.getElementById('lblStatus')
-    let lblData = document.getElementById('lblData')
-    let btnEnviar = document.getElementById("btnEnviar")
-    let tagImg = document.getElementById("imagem")
-    let enviarDados
-    let receberDados
-    const TAMANHO = 160 * 120
-    let imageArray = []
-    let dispositivo
-    
+    <script>
+        let btnConectar = document.getElementById('btnConectar')
+        let lblStatus = document.getElementById('lblStatus')
+        let lblData = document.getElementById('lblData')
+        let lblpronto = document.getElementById('pronto')
+        let input = document.getElementById("inputNumber")
+        let btnEnviar = document.getElementById("btnEnviar")
+        let dadosCSV = document.getElementById("dadosCSV")
+        let btnBaixarCSV = document.getElementById("baixarCSV")
+        let inputLocal = document.getElementById('local')
+        let inputNum = document.getElementById('num')
+        let enviarDados
+        let receberDados
+        let dispositivo
+        let redesCSV = "data:text/csv;charset=utf-8,"
+        var numincremento = parseInt(inputNum.value);
+        let dataFormatada
 
-    
-    btnConectar.addEventListener('click',() => {
-        navigator.bluetooth.requestDevice({
-            acceptAllDevices : true,
-            optionalServices: ['19b10000-e8f2-537e-4f6c-d104768a1213']
+        setInterval(() => {
+            let dataAtual = new Date();
+            let ano = dataAtual.getFullYear();
+            let mes = dataAtual.getMonth() + 1;
+            let dia = dataAtual.getDate();
+            let hora = dataAtual.getHours();
+            let minuto = dataAtual.getMinutes();
+            let segundo = dataAtual.getSeconds();
+            dataFormatada = `${dia}/${mes}/${ano},${hora}:${minuto}:${segundo},`;
+
+        }, 1000);
+
+        btnConectar.addEventListener('click', () => {
+            navigator.bluetooth.requestDevice({
+                acceptAllDevices: true,
+                optionalServices: ['19b10000-e8f2-537e-4f6c-d104768a1213']
+            })
+                .then(device => {
+
+                    // dispositivo = device
+                    return device.gatt.connect()
+                })
+                .then(server => {
+                    lblStatus.innerHTML = 'Status: Conectado '
+                    return server.getPrimaryService('19b10000-e8f2-537e-4f6c-d104768a1213')
+                })
+                .then(service => {
+                    let promiseReceberDados = service.getCharacteristic('19b10000-e8f2-537e-4f6c-d104768a1214')
+                    let promiseEnviarDados = service.getCharacteristic('19b10000-e8f2-537e-4f6c-d104768a1215')
+                    return Promise.all([promiseEnviarDados, promiseReceberDados])
+                })
+                .then(([promiseEnviarDados, promiseReceberDados]) => {
+
+                    enviarDados = promiseEnviarDados
+                    receberDados = promiseReceberDados
+
+                    receberDados.addEventListener('characteristicvaluechanged', valorAlterado)
+                    receberDados.startNotifications()
+
+                    // return enviarDados.writeValue(0)
+                })
+
         })
-        .then(device => {
-            
-            // dispositivo = device
-            return device.gatt.connect()
-        })
-        .then(server => {
-            lblStatus.innerHTML = 'Status: Conectado '
-            return server.getPrimaryService('19b10000-e8f2-537e-4f6c-d104768a1213')
-        })
-        .then(service => {
-            let promiseReceberDados = service.getCharacteristic('19b10000-e8f2-537e-4f6c-d104768a1214')
-            let promiseEnviarDados =  service.getCharacteristic('19b10000-e8f2-537e-4f6c-d104768a1215')
-            return Promise.all([promiseEnviarDados,promiseReceberDados])
-        })
-        .then( ([promiseEnviarDados,promiseReceberDados]) => {
-            
-            enviarDados = promiseEnviarDados
-            receberDados = promiseReceberDados
-            
-            receberDados.addEventListener('characteristicvaluechanged', valorAlterado)
-            receberDados.startNotifications()
 
-            // return enviarDados.writeValue(0)
+        btnEnviar.addEventListener('click', () => {
+            let valorEnviar = Uint8Array.of(1)
+            numincremento = parseInt(document.getElementById('num').value) + 1
+            document.getElementById('num').value = numincremento
+            enviarDados.writeValue(valorEnviar)
         })
 
-    })
-
-    btnEnviar.addEventListener('click', () => {
-        let valorEnviar = Uint8Array.of(1)
-        enviarDados.writeValue(valorEnviar)
-    })
-
-    function valorAlterado(event) {
-        
-        
-        let value = event.target.value
-        let len = value.byteLength
-        let dataArray = new Uint8Array(len)
-        for(let i = 0; i < len; i++){
-            dataArray[i] = value.getUint8(i)
-        }
-        imageArray = imageArray.concat(Array.from(dataArray))
-        if(imageArray.length >= TAMANHO){
-            console.log(imageArray.length);
-            const canvas = document.getElementById('imageCanvas');
-            const ctx = canvas.getContext('2d');
-            let imageData = ctx.createImageData(160,120);
-            
-
-            for (let i = 0, j = 0; i < imageArray.length; i++, j += 4) {
-                imageData.data[j] = imageArray[i]
-                imageData.data[j + 1] = imageArray[i];
-                imageData.data[j + 2] = imageArray[i];
-                imageData.data[j + 3] = 255;
+        function valorAlterado(event) {
+            let value = event.target.value
+            let local = inputLocal.value
+            let len = value.byteLength
+            let dataArray = new Uint8Array(len)
+            for (let i = 0; i < len; i++) {
+                dataArray[i] = value.getUint8(i)
             }
-
-            ctx.putImageData(imageData, 0, 0); 
-            imageArray = []
+            var string = new TextDecoder().decode(dataArray);
+            dadosCSV.innerHTML += '<li>' + numincremento + ',' + string + ',' + local + '</li>'
+            console.log(string)
+            redesCSV += dataFormatada + numincremento + ',' + string + ',' + local + '\n'
+            lblpronto.innerHTML = 'Num = ' + numincremento
         }
-    }
+
+        btnBaixarCSV.addEventListener('click', () => {
+            var encodedUri = encodeURI(redesCSV);
+            // window.open(encodedUri);
+
+            // var encodedUri = encodeURI(csvContent);
+            var link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "dados.csv");
+            document.body.appendChild(link); // Required for FF
+
+            link.click();
+
+        })
 
 
-</script>
+    </script>
+</body>
+
+</html>
