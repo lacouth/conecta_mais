@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <button id="btnConectar">Conectar</button>
+    <p id="lblStatus">Status: desconectado</p>
+    <label for="Num">Num: </label>
+    <input type="number" id="num" value="0">
+    <br>
+    <label for="local">Local: </label>
+    <input type="text" id="local" name="local">
+    <br>
+    <button id="btnEnviar">Enviar</button>
+    <br>
+    <p id="pronto"> Esperando </p>
+    <br>
+    <button id="baixarCSV">Baixar Dados</button>
+    <br>
+    <button onclick="submitForm()">Enviar Dados</button>
+    <ol id="dadosCSV"></ol>
+
+    <script>
+        let btnConectar = document.getElementById('btnConectar')
+        let lblStatus = document.getElementById('lblStatus')
+        let lblData = document.getElementById('lblData')
+        let lblpronto = document.getElementById('pronto')
+        let input = document.getElementById("inputNumber")
+        let btnEnviar = document.getElementById("btnEnviar")
+        let dadosCSV = document.getElementById("dadosCSV")
+        let btnBaixarCSV = document.getElementById("baixarCSV")
+        let inputLocal = document.getElementById('local')
+        let inputNum = document.getElementById('num')
+        let enviarDados
+        let receberDados
+        let dispositivo
+        let redesCSV = "data:text/csv;charset=utf-8,"
+        var numincremento = parseInt(inputNum.value);
+        let dataFormatada
+
+        setInterval(() => {
+            let dataAtual = new Date();
+            let ano = dataAtual.getFullYear();
+            let mes = dataAtual.getMonth() + 1;
+            let dia = dataAtual.getDate();
+            let hora = dataAtual.getHours();
+            let minuto = dataAtual.getMinutes();
+            let segundo = dataAtual.getSeconds();
+            dataFormatada = `${dia}/${mes}/${ano},${hora}:${minuto}:${segundo},`;
+
+        }, 1000);
+
+        btnConectar.addEventListener('click', () => {
+            navigator.bluetooth.requestDevice({
+                acceptAllDevices: true,
+                optionalServices: ['19b10000-e8f2-537e-4f6c-d104768a1213']
+            })
+                .then(device => {
+
+                    // dispositivo = device
+                    return device.gatt.connect()
+                })
+                .then(server => {
+                    lblStatus.innerHTML = 'Status: Conectado '
+                    return server.getPrimaryService('19b10000-e8f2-537e-4f6c-d104768a1213')
+                })
+                .then(service => {
+                    let promiseReceberDados = service.getCharacteristic('19b10000-e8f2-537e-4f6c-d104768a1214')
+                    let promiseEnviarDados = service.getCharacteristic('19b10000-e8f2-537e-4f6c-d104768a1215')
+                    return Promise.all([promiseEnviarDados, promiseReceberDados])
+                })
+                .then(([promiseEnviarDados, promiseReceberDados]) => {
+
+                    enviarDados = promiseEnviarDados
+                    receberDados = promiseReceberDados
+
+                    receberDados.addEventListener('characteristicvaluechanged', valorAlterado)
+                    receberDados.startNotifications()
+
+                    // return enviarDados.writeValue(0)
+                })
+
+        })
+
+        btnEnviar.addEventListener('click', () => {
+            let valorEnviar = Uint8Array.of(1)
+            numincremento = parseInt(document.getElementById('num').value) + 1
+            document.getElementById('num').value = numincremento
+            enviarDados.writeValue(valorEnviar)
+        })
+
+        function valorAlterado(event) {
+            let value = event.target.value
+            let local = inputLocal.value
+            let len = value.byteLength
+            let dataArray = new Uint8Array(len)
+            for (let i = 0; i < len; i++) {
+                dataArray[i] = value.getUint8(i)
+            }
+            var string = new TextDecoder().decode(dataArray);
+            dadosCSV.innerHTML += '<li>' + numincremento + ',' + string + ',' + local + '</li>'
+            console.log(string)
+            redesCSV += dataFormatada + numincremento + ',' + string + ',' + local + '\n'
+            lblpronto.innerHTML = 'Num = ' + numincremento
+        }
+
+        btnBaixarCSV.addEventListener('click', () => {
+            var encodedUri = encodeURI(redesCSV);
+            // window.open(encodedUri);
+
+            // var encodedUri = encodeURI(csvContent);
+            var link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "dados.csv");
+            document.body.appendChild(link); // Required for FF
+
+            link.click();
+
+        })
+
+        function submitForm() {
+            const url = "https://script.google.com/macros/s/AKfycbyfAfwW31mSlRpe5jpE0SbQTnBtVOCA068PIIDeJC9UlPTb5ir0KPyOVEM6chw35hBUYg/exec";
+
+            let enviarplanilha = redesCSV;
+
+            enviarplanilha = enviarplanilha.replace(/^data:text\/csv;charset=utf-8,/, "");
+
+            enviarplanilha = enviarplanilha.replace(/\n/g, "\\n");
+
+            console.log(enviarplanilha)
+
+            const payload = { data: enviarplanilha };
+
+            fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: `data=${encodeURIComponent(enviarplanilha)}`
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.result === "success") {
+                        alert("Enviado com sucesso!");
+                    } else {
+                        alert("Error: " + data.error);
+                    }
+                })
+                .catch(error => alert("Erro: " + error));
+        }
+
+    </script>
+</body>
+
+</html>
