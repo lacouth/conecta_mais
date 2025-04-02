@@ -68,13 +68,11 @@ void verificar_ambiente()
     
     if (i == n - 1)
       achado = regressor.predictLabel(x);
-
-      enviarImagem.writeValue(achado.c_str());
-      WiFi.scanDelete();
-      digitalWrite(led, 0);
-      Serial.println("Enviado");
-    
   }
+  enviarImagem.writeValue(achado.c_str());
+  WiFi.scanDelete();
+  digitalWrite(led, 0);
+  Serial.println("Enviado");
 }
 
 void dataWritten(BLEDevice central, BLECharacteristic characteristic) {
