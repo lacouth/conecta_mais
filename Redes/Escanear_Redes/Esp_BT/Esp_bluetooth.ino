@@ -61,6 +61,7 @@ void dataWritten(BLEDevice central, BLECharacteristic characteristic) {
       Serial.println(exemplo);
       enviarImagem.writeValue(exemplo.c_str());
     }
+    WiFi.scanDelete();
     Serial.println("Enviado");
   }
 }
