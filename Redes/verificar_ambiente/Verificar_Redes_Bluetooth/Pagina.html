@@ -2,202 +2,197 @@
 <html lang="en">
 
 <head>
-    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-        }
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
 
-        button {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            margin: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            border-radius: 5px;
-            transition: background 0.3s;
-        }
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      margin: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      border-radius: 5px;
+      transition: background 0.3s;
+    }
 
-        button:hover {
-            background-color: #0056b3;
-        }
+    button:hover {
+      background-color: #0056b3;
+    }
 
-        p, label {
-            font-size: 18px;
-            margin: 5px 0;
-        }
+    p, label {
+      font-size: 18px;
+      margin: 5px 0;
+    }
 
-        input {
-            padding: 8px;
-            font-size: 16px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            margin: 5px;
-        }
+    input {
+      padding: 8px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      margin: 5px;
+    }
 
-        #dadosCSV {
-            list-style-type: none;
-            padding: 10px;
-            width: 90%;
-            max-width: 400px;
-            background: white;
-            border-radius: 5px;
-            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-            margin-top: 10px;
-            max-height: 300px;
-            overflow-y: auto;
-            overflow-x: hidden;
-        }
+    #dadosCSV {
+      list-style-type: none;
+      padding: 10px;
+      width: 90%;
+      max-width: 500px;
+      background: white;
+      border-radius: 5px;
+      box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+      margin-top: 10px;
+      max-height: 300px;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
 
-        #dadosCSV li {
-            padding: 8px;
-            border-bottom: 1px solid #ddd;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-        }
+    #dadosCSV li {
+      padding: 8px;
+      border-bottom: 1px solid #ddd;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
 
-        #dadosCSV li:last-child {
-            border-bottom: none;
-        }
-
-        .button-container {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-    </style>
-
+    #dadosCSV li:last-child {
+      border-bottom: none;
+    }
+  </style>
 </head>
 
 <body>
-    <button id="btnConectar">Conectar</button>
-    <p id="lblStatus">Status: desconectado</p>
-    <label for="Num">Num: </label>
-    <input type="number" id="num" value="0">
-    <br> 
-    <label for="local">Local: </label>
-    <input type="text" id="local" name="local">
-    <br> 
-    <button id="btnEnviar">Enviar</button> 
-    <br> 
-    <p id="pronto"> Esperando </p> 
-    <br>
-    <button id="baixarCSV">Baixar Dados</button>
-    <ol id="dadosCSV"></ol>
+  <button id="btnConectar">Conectar</button>
+  <p id="lblStatus">Status: desconectado</p>
 
-    <script>
-        let btnConectar = document.getElementById('btnConectar')
-        let lblStatus = document.getElementById('lblStatus')
-        let lblData = document.getElementById('lblData')
-        let lblpronto = document.getElementById('pronto')
-        let input = document.getElementById("inputNumber")
-        let btnEnviar = document.getElementById("btnEnviar")
-        let dadosCSV = document.getElementById("dadosCSV")
-        let btnBaixarCSV = document.getElementById("baixarCSV")
-        let inputLocal = document.getElementById('local')
-        let inputNum = document.getElementById('num')
-        let enviarDados
-        let receberDados
-        let dispositivo
-        let redesCSV = "data:text/csv;charset=utf-8,"
-        var numincremento = parseInt(inputNum.value);
-        let dataFormatada
+  <label for="num">Num: </label>
+  <input type="number" id="num" value="0"><br>
 
-        setInterval(() => {
-            let dataAtual = new Date();
-            let ano = dataAtual.getFullYear();
-            let mes = dataAtual.getMonth() + 1;
-            let dia = dataAtual.getDate();
-            let hora = dataAtual.getHours();
-            let minuto = dataAtual.getMinutes();
-            let segundo = dataAtual.getSeconds();
-            dataFormatada = `${dia}/${mes}/${ano},${hora}:${minuto}:${segundo},`;
+  <label for="local">Local: </label>
+  <input type="text" id="local" name="local"><br>
 
-        }, 1000);
+  <!-- Repetições -->
+  <label for="repeticoes">Repetições: </label>
+  <input type="number" id="repeticoes" value="1" min="1"><br>
 
-        btnConectar.addEventListener('click', () => {
-            navigator.bluetooth.requestDevice({
-                acceptAllDevices: true,
-                optionalServices: ['19b10000-e8f2-537e-4f6c-d104768a1213']
-            })
-                .then(device => {
+  <button id="btnEnviar">Enviar</button><br>
+  <p id="pronto">Esperando</p><br>
+  <button id="baixarCSV">Baixar Dados</button>
+  <ol id="dadosCSV"></ol>
 
-                    // dispositivo = device
-                    return device.gatt.connect()
-                })
-                .then(server => {
-                    lblStatus.innerHTML = 'Status: Conectado '
-                    return server.getPrimaryService('19b10000-e8f2-537e-4f6c-d104768a1213')
-                })
-                .then(service => {
-                    let promiseReceberDados = service.getCharacteristic('19b10000-e8f2-537e-4f6c-d104768a1214')
-                    let promiseEnviarDados = service.getCharacteristic('19b10000-e8f2-537e-4f6c-d104768a1215')
-                    return Promise.all([promiseEnviarDados, promiseReceberDados])
-                })
-                .then(([promiseEnviarDados, promiseReceberDados]) => {
+  <script>
+    let btnConectar      = document.getElementById('btnConectar');
+    let lblStatus        = document.getElementById('lblStatus');
+    let lblpronto        = document.getElementById('pronto');
+    let btnEnviar        = document.getElementById('btnEnviar');
+    let dadosCSV         = document.getElementById('dadosCSV');
+    let btnBaixar        = document.getElementById('baixarCSV');
+    let inputLocal       = document.getElementById('local');
+    let inputNum         = document.getElementById('num');
+    let inputRepeticoes  = document.getElementById('repeticoes');
+    let enviarDados, receberDados;
+    let redesCSV         = "data:text/csv;charset=utf-8,";
+    let numincremento    = parseInt(inputNum.value);
+    let dataFormatada;
+    let repeticoesRestantes = 0;
+    let coletarTimeout   = null;
 
-                    enviarDados = promiseEnviarDados
-                    receberDados = promiseReceberDados
+    // Atualiza timestamp
+    setInterval(() => {
+      let d = new Date();
+      dataFormatada = `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()},${d.getHours()}:${d.getMinutes()}:${d.getSeconds()},`;
+    }, 1000);
 
-                    receberDados.addEventListener('characteristicvaluechanged', valorAlterado)
-                    receberDados.startNotifications()
+    btnConectar.addEventListener('click', () => {
+      navigator.bluetooth.requestDevice({
+        acceptAllDevices: true,
+        optionalServices: ['19b10000-e8f2-537e-4f6c-d104768a1213']
+      })
+      .then(device => device.gatt.connect())
+      .then(server => {
+        lblStatus.textContent = 'Status: Conectado';
+        return server.getPrimaryService('19b10000-e8f2-537e-4f6c-d104768a1213');
+      })
+      .then(service => Promise.all([
+        service.getCharacteristic('19b10000-e8f2-537e-4f6c-d104768a1215'),
+        service.getCharacteristic('19b10000-e8f2-537e-4f6c-d104768a1214')
+      ]))
+      .then(([env, rec]) => {
+        enviarDados  = env;
+        receberDados = rec;
+        receberDados.startNotifications();
+      });
+    });
 
-                    // return enviarDados.writeValue(0)
-                })
+    btnEnviar.addEventListener('click', () => {
+      repeticoesRestantes = parseInt(inputRepeticoes.value) || 1;
+      iniciarEnvio();
+    });
 
-        })
+    function iniciarEnvio() {
+      if (repeticoesRestantes > 0) {
+        // incrementa Num e dispara um único write
+        numincremento = parseInt(inputNum.value) + 1;
+        inputNum.value = numincremento;
+        enviarDados.writeValue(Uint8Array.of(1));
 
-        btnEnviar.addEventListener('click', () => {
-            let valorEnviar = Uint8Array.of(1)
-            numincremento = parseInt(document.getElementById('num').value) + 1
-            document.getElementById('num').value = numincremento
-            enviarDados.writeValue(valorEnviar)
-        })
+        // prepara coleta até timeout
+        clearTimeout(coletarTimeout);
+        receberDados.addEventListener('characteristicvaluechanged', valorAlterado);
+      }
+    }
 
-        function valorAlterado(event) {
-            let value = event.target.value
-            let local = inputLocal.value
-            let len = value.byteLength
-            let dataArray = new Uint8Array(len)
-            for (let i = 0; i < len; i++) {
-                dataArray[i] = value.getUint8(i)
-            }
-            var string = new TextDecoder().decode(dataArray);
-            let acerto = string == local ? 1 : 0 
-            dadosCSV.innerHTML += '<li>' + numincremento + ',' + string + ',' + local + '</li>'
-            console.log(string)
-            redesCSV += dataFormatada + numincremento + ',' + local + ',' + string + "," + acerto +'\n'
-            lblpronto.innerHTML = 'Num = ' + numincremento
+    function valorAlterado(event) {
+      let value = event.target.value;
+      let local = inputLocal.value;
+
+      // decodifica bytes
+      let len = value.byteLength;
+      let dataArray = new Uint8Array(len);
+      for (let i = 0; i < len; i++) {
+        dataArray[i] = value.getUint8(i);
+      }
+      let string = new TextDecoder().decode(dataArray);
+
+      // adiciona ao <ol>
+      dadosCSV.innerHTML += `<li>${numincremento},${string},${local},${string===local?1:0}</li>`;
+      redesCSV    += `${dataFormatada}${numincremento},${local},${string},${string===local?1:0}\n`;
+
+      // cada notificação reinicia o timeout
+      clearTimeout(coletarTimeout);
+      coletarTimeout = setTimeout(() => {
+        // sem novas notificações há 200ms -> final da resposta
+        lblpronto.textContent = 'Num = ' + numincremento +
+                                '  |  Restam: ' + (repeticoesRestantes-1);
+        repeticoesRestantes--;
+        if (repeticoesRestantes > 0) {
+          iniciarEnvio();
         }
+      }, 200);
+    }
 
-        btnBaixarCSV.addEventListener('click', () => {
-            var encodedUri = encodeURI(redesCSV);
-            // window.open(encodedUri);
-
-            // var encodedUri = encodeURI(csvContent);
-            var link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "Verificados.csv");
-            document.body.appendChild(link); // Required for FF
-
-            link.click();
-
-        })
-
-
-    </script>
+    btnBaixar.addEventListener('click', () => {
+      let link = document.createElement('a');
+      link.href = encodeURI(redesCSV);
+      link.download = 'Verificados.csv';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+  </script>
 </body>
 
 </html>
